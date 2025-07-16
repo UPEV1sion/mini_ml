@@ -6,19 +6,39 @@
 
 #include "gradients.h"
 
+// 2/m sum_{i=1}^{m} x_i(<w, x_i> - y_i)
 Gradient mse_gradient(const Data *data, const Model *model)
 {
     Gradient grad = {0};
     for (size_t i = 0; i < data->num_samples; ++i)
     {
         const Sample *sample = data->samples + i;
-        const double pred = sample->features[0] * model->weights[1] + model->weights[0];
-        const double error = pred - sample->label;
-        grad.values[0] += error;
-        grad.values[1] += error * sample->features[0];
-    }
-    grad.values[0] *= 2.0 / data->num_samples;
-    grad.values[1] *= 2.0 / data->num_samples;
+        const double pred = h(model->weights, sample->features, data->num_features);
 
+        const double error = pred - sample->label;
+        for (size_t j = 0; j < data->num_features; ++j)
+        {
+            grad.values[j] += error * sample->features[j];
+        }
+    }
+
+    for (size_t j = 0; j < data->num_features; ++j)
+    {
+        grad.values[j] *= 2.0 / data->num_samples;
+    }
     return grad;
+}
+
+double mse_error(const Data *data, const Model *model)
+{
+    double loss = 0.0;
+    for (size_t i = 0; i < data->num_samples; ++i)
+    {
+        const Sample *sample = data->samples + i;
+        const double pred = h(model->weights, sample->features, data->num_features);
+
+        const double error = pred - sample->label;
+        loss += error * error;
+    }
+    return loss / data->num_samples;
 }

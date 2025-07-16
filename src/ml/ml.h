@@ -5,8 +5,10 @@
 #pragma once
 
 #define LEARNING_RATE 0.000000000001
+#define ITERATIONS 100000
+
 #define MAX_WEIGHTS 10
-#define MAX_SAMPLES 10000
+#define MAX_SAMPLES 1000
 
 typedef struct
 {
@@ -33,5 +35,6 @@ typedef struct
 } Gradient;
 
 int get_data_from_file(const char *filename, Data *data);
-double compute_loss(const Data *data, const Model *model);
-void learn(const Data *data, Model *model, Gradient (*grad_loss)(const Data *, const Model *));
+double mse_error(const Data *data, const Model *model);
+void learn(const Data *data, Model *model, Gradient (*grad_loss)(const Data *, const Model *), double (*error)(const Data *, const Model *));
+double h(const double *w, const double *x, size_t n);

@@ -6,3 +6,4 @@
 #include"ml/ml.h"
 
 Gradient mse_gradient(const Data *data, const Model *model);
+double mse_error(const Data *data, const Model *model);
