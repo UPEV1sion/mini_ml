@@ -12,7 +12,7 @@ int main(void)
     data.capacity = MAX_SAMPLES;
     data.samples = samples;
     Model model = {0};
-    get_data_from_file("/home/escha/CLionProjects/ai/assets/classification.csv", &data);
+    get_data_from_file("/home/escha/CLionProjects/ai/assets/new_classification.csv", &data);
     learn(&data, &model, log_loss_gradient, zero_one_loss);
 
     printf("Weights: ");

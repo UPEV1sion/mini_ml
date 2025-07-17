@@ -16,7 +16,7 @@ Gradient log_loss_gradient(const Data *data, const Model *model)
         const double pred = h(model->weights, sample->features, data->num_features);
 
         const double y = sample->label;
-        double denom = 1 + exp(y * pred);
+        const double denom = 1 + exp(y * pred);
         for (size_t j = 0; j < data->num_features; ++j)
         {
             grad.values[j] += (-y * sample->features[j]) / denom;

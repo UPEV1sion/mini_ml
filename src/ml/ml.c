@@ -4,12 +4,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 #include "ml.h"
 
-#include <string.h>
-
 #define MAX_LINE_LEN 1024
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 int get_data_from_file(const char *filename, Data *data)
 {
@@ -63,23 +66,75 @@ int get_data_from_file(const char *filename, Data *data)
     return 0;
 }
 
+void min_max_scale(Data *data)
+{
+    for (int i = 1; i < data->num_features; ++i) // ignore bias
+    {
+        double min_val = data->samples[0].features[i];
+        double max_val = data->samples[0].features[i];
+
+        for (int j = 1; j < data->num_samples; ++j)
+        {
+            const double val = data->samples[j].features[i];
+            min_val = MIN(min_val, val);
+            max_val = MAX(max_val, val);
+        }
+
+
+        data->feature_min[i] = min_val;
+        data->feature_max[i] = max_val;
+
+        double range = max_val - min_val;
+        if (range == 0) range = 1.0;
+
+        for (int j = 0; j < data->num_samples; ++j)
+        {
+            data->samples[j].features[i] = (data->samples[j].features[i] - min_val) / range;
+        }
+    }
+}
+
 void learn(
-    const Data *data,
+    Data *data,
     Model *model,
     Gradient (*grad_loss)(const Data *, const Model *),
     double (*error)(const Data *, const Model *))
 {
-    for (size_t i = 0; i < ITERATIONS; ++i)
+    const double initial_lr = 0.0001;
+    const double decay_rate = 1e-5;
+
+    min_max_scale(data);
+
+    double best_loss = 1e10;
+    int no_improve = 0;
+    int patience = 100;
+
+    for (int i = 0; i < ITERATIONS; ++i)
     {
-        const Gradient grad = grad_loss(data, model);
-        for (size_t j = 0; j < data->num_features; ++j)
-        {
-            model->weights[j] -= LEARNING_RATE * grad.values[j];
-        }
-        if (i % 1000 == 0)
+        const double learning_rate = initial_lr / (1.0 + decay_rate * i);
+
+        Gradient grad = grad_loss(data, model);
+        for (int j = 0; j < data->num_features; ++j)
+            model->weights[j] -= learning_rate * grad.values[j];
+
+        if (i % 10000 == 0)
         {
             const double loss = error(data, model);
-            printf("Iteration %zu: loss = %f\n", i, loss);
+            printf("Iteration %d: loss = %f\n", i, loss);
+
+            if (loss < best_loss)
+            {
+                best_loss = loss;
+                no_improve = 0;
+            } else
+            {
+                no_improve++;
+                if (no_improve >= patience)
+                {
+                    printf("Stopping early at iteration %d\n", i);
+                    break;
+                }
+            }
         }
     }
 }
